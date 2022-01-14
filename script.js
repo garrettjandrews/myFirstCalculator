@@ -5,7 +5,7 @@ function operate(operator, num1, num2) {
     return num1 + num2;
   } else if (operator == '-') {
     return num1 - num2;
-  } else if (operator == '*') {
+  } else if (operator == 'x') {
     return num1 * num2;
   } else if (operator == '/') {
     return num1 / num2;
@@ -15,6 +15,17 @@ function operate(operator, num1, num2) {
 function processNumber(number) {
   // first let's see what's in the calculator already
   let displayedLine = document.querySelector('.calculator-display')
+
+  // we have to clear the display line if the last button pressed was an operator
+  if (operatorList.includes(lastButtonPressed) && operationHasOccurred === false) {
+    displayedLine.textContent = "0";
+  }
+
+  if (operationHasOccurred === true && !operatorList.includes(lastButtonPressed)) {
+    operationHasOccurred = false;
+    displayedLine.textContent = "0";
+    operatorPressedPrior = "";
+  }
 
   // replace conditionally
   if (displayedLine.textContent === "0") {
@@ -57,16 +68,41 @@ function processClear() {
 function processOperator(button) {
   let displayedLine = document.querySelector('.calculator-display');
   if (operatorList.includes(lastButtonPressed)) {
+    displayedLine.textContent = displayedLine.textContent;
     lastButtonPressed = button;
     operatorPressedPrior = button;
-  } else if (!operatorList.includes(operatorPressedPrior)) {
-    priorNumber = document.querySelector('.calculator-display');
+  } else if (operatorPressedPrior === "") {
+    priorNumber = displayedLine.textContent;
+    lastButtonPressed = button;
+    operatorPressedPrior = button;
+  } else {
+    resultOfOperation = operate(operatorPressedPrior, priorNumber, displayedLine.textContent);
+    priorNumber = resultOfOperation; //this is the new prior number
+    displayedLine.textContent = resultOfOperation;
+    operationHasOccurred = true;
+    lastButtonPressed = button;
+    operatorPressedPrior = button;
   }
-
 }
 
+function processEqual() {
+  if (operatorPressedPrior === "") {
+    displayedLine.textContent = displayedLine.textContent;
+    lastButtonPressed = "="
+  } else {
+    resultOfOperation = operate(operatorPressedPrior, priorNumber, displayedLine.textContent);
+    priorNumber = resultOfOperation; //this is the new prior number
+    displayedLine.textContent = resultOfOperation;
+    operationHasOccurred = true;
+    lastButtonPressed = "=";
+    operatorPressedPrior = "";
+  }
+}
+
+let operationHasOccurred = false;
+let resultOfOperation = "";
 let priorNumber = "";
-let operatorList = ['+', '-', '*', '/'];
+let operatorList = ['+', '-', 'x', '/'];
 let lastButtonPressed = "";
 let operatorPressedPrior = "";
 let allNumButtons = document.querySelectorAll('.number-button');
@@ -125,6 +161,12 @@ allSpecButtons.forEach((button) => {
     }
     if (button.textContent == "C" || button.textContent == "AC") {
       processClear();
+    }
+    if (operatorList.includes(button.textContent)) {
+      processOperator(button.textContent);
+    }
+    if (button.textContent == "=") {
+      processEqual();
     }
   })
 })
